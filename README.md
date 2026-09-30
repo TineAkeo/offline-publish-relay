@@ -1,6 +1,6 @@
 # offline-publish-relay
 
-A tiny Webflow Cloud app that turns a Webflow **Site publish** webhook into
+A tiny Webflow Cloud (Astro) app that turns a Webflow **Site publish** webhook into
 a GitHub **Run workflow** for that site's offline app repo, so the offline
 app rebuilds itself whenever someone clicks Publish in Webflow.
 
@@ -69,6 +69,15 @@ Publish the site once to test. In the offline app repo's **Actions** tab, a
 
 ## Developing
 
-`src/worker.ts` handles `/hook/...` and passes everything else to the static
-files (`index.html`). Environment variables are read from `env` in the
-worker; never name them `VITE_*`, which would ship them to browsers.
+An Astro app on Webflow Cloud, following Webflow's `hello-world-astro`
+starter: `webflow.json` declares `astro`, and `astro.config.mjs` uses the
+Cloudflare adapter with `base: "CLOUD_MOUNT_PATH"`, which Webflow replaces
+with the mount path.
+
+- `src/lib/relay.ts`: all the relay logic.
+- `src/pages/hook/[...path].ts`: the `…/hook/<owner>/<repo>/<secret>`
+  endpoint. It reads the environment variables from `cloudflare:workers`.
+- `src/pages/index.astro`: the status page at the mount path.
+
+Environment variables are set in the app's Webflow Cloud settings. Never
+name them `PUBLIC_*`, which would ship them to browsers.

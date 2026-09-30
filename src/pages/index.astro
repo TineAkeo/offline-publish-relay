@@ -1,0 +1,26 @@
+---
+// Status page at the relay's mount path (e.g. /hooks).
+---
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Publish relay</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: grid; place-items: center; background: #f6f6f4; color: #1b1d1f;
+           font: 15px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif; }
+    @media (prefers-color-scheme: dark) { body { background: #141516; color: #ecedee; } }
+    main { max-width: 420px; padding: 24px 16px; text-align: center; }
+    h1 { font-size: 20px; margin: 0 0 6px; }
+    p { margin: 0; opacity: .7; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Publish relay is running</h1>
+    <p>Webflow “Site publish” webhooks sent here start the offline app rebuild on GitHub.</p>
+  </main>
+</body>
+</html>
