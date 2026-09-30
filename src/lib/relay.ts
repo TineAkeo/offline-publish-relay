@@ -39,12 +39,20 @@ function sameSecret(a: string, b: string): boolean {
 
 const notFound = () => new Response('Not found', { status: 404 });
 
+// Failures on GitHub's side. Not 5xx: Webflow Cloud swaps 5xx responses for
+// its own error page, which would hide the reason. Any non-200 still makes
+// Webflow retry the webhook. Also logged (Webflow Cloud app logs).
+function upstream(message: string): Response {
+  console.error('[relay]', message);
+  return new Response(message, { status: 424, headers: { 'Content-Type': 'text/plain' } });
+}
+
 /** Handle a request for "<owner>/<repo>/<secret>" (the part after /hook/). */
 export async function handleHook(request: Request, rest: string, env: RelayEnv): Promise<Response> {
   const match = HOOK_RE.exec(rest || '');
   if (!match) return notFound();
   if (request.method !== 'POST') return new Response('Use POST', { status: 405 });
-  if (!env.GITHUB_TOKEN) return new Response('Relay is missing GITHUB_TOKEN', { status: 500 });
+  if (!env.GITHUB_TOKEN) return upstream('Relay is missing GITHUB_TOKEN (set it in the app\'s environment variables)');
 
   const [, owner, repo, secret] = match;
   const allowed = (env.ALLOWED_OWNERS || '')
@@ -55,7 +63,7 @@ export async function handleHook(request: Request, rest: string, env: RelayEnv):
     headers: { Accept: 'application/vnd.github.raw+json' },
   });
   if (res.status === 404) return notFound();
-  if (!res.ok) return new Response(`GitHub error reading hook.json: ${res.status}`, { status: 502 });
+  if (!res.ok) return upstream(`GitHub error reading .kit/hook.json: ${res.status} ${(await res.text()).slice(0, 300)}`);
   let hook: { secret?: string; branch?: string };
   try {
     hook = await res.json();
@@ -71,7 +79,7 @@ export async function handleHook(request: Request, rest: string, env: RelayEnv):
     body: JSON.stringify({ ref: hook.branch || 'main' }),
   });
   if (run.status !== 204) {
-    return new Response(`GitHub didn't start the rebuild: ${run.status} ${await run.text()}`, { status: 502 });
+    return upstream(`GitHub didn't start the rebuild: ${run.status} ${(await run.text()).slice(0, 300)}`);
   }
   return Response.json({ ok: true, repo: `${owner}/${repo}`, started: WORKFLOW });
 }
